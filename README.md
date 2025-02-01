@@ -24,10 +24,12 @@ git clone https://github.com/SakanaAI/self-adaptive-llms
 cd self-adaptive-llms
 ```
 
-### 2. Install Libraries
+### 2. Install Libraries (tested on WSL - Ubuntu 22.04)
 ```bash
-conda create -n t2 python=3.11 -y
-conda activate t2
+sudo apt install build-essential python3.11 python3.11-dev python3.11-venv -y
+cd && python3.11 -m venv envs/t2
+source envs/t2/bin/activate
+cd self-adaptive-llms
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
@@ -36,6 +38,19 @@ pip install -r requirements.txt
 ```bash
 cd evaluation/fishfarm
 pip install -e .
+```
+
+### 4. Login to Hugging Face
+* Go to huggingface.co and login
+* Go to https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct and accept the terms of use.
+* Go to your huggingface account, click on the "Settings" tab, and then click on "API tokens".
+* (if you don't already have a token) Click on "Create a new token".
+* Enter a name for the token, and click on "Create".
+* Copy the token to your clipboard (leave page open for a bit)
+* Run the following command in your terminal:
+
+```bash
+huggingface-cli login # token locally saved to ~/.cache/huggingface/token
 ```
 
 ## Usage
