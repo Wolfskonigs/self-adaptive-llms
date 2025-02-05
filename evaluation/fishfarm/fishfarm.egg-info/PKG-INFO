@@ -1,0 +1,47 @@
+Metadata-Version: 2.2
+Name: fishfarm
+Version: 0.1.0.dev0
+Author: Takuya Akiba
+Author-email: takiba@sakana.ai
+Project-URL: repository, https://github.com/SakanaAI/fishfarm
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Software Development
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: huggingface_hub
+Requires-Dist: transformers
+Requires-Dist: pydantic
+Requires-Dist: colorlog
+Provides-Extra: development
+Requires-Dist: black; extra == "development"
+Requires-Dist: blackdoc; extra == "development"
+Requires-Dist: flake8; extra == "development"
+Requires-Dist: isort; extra == "development"
+Requires-Dist: mypy; extra == "development"
+Requires-Dist: pytest; extra == "development"
+Requires-Dist: pytest-mock; extra == "development"
+Requires-Dist: types-PyYAML; extra == "development"
+Provides-Extra: full
+Requires-Dist: vllm; extra == "full"
+Requires-Dist: langchain; extra == "full"
+Requires-Dist: langchain-openai; extra == "full"
+Requires-Dist: fasttext-wheel; extra == "full"
+Requires-Dist: datasets; extra == "full"
+Requires-Dist: mysql-connector-python==8.0.32; extra == "full"
+Requires-Dist: docker==6.1.2; extra == "full"
+Requires-Dist: evalplus@ git+https://github.com/evalplus/evalplus@1895d2f6aa8895044a7cf69defc24bd57695e885 ; extra == "full"
+Requires-Dist: rouge-score; extra == "full"

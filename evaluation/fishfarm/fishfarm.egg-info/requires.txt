@@ -1,0 +1,25 @@
+huggingface_hub
+transformers
+pydantic
+colorlog
+
+[development]
+black
+blackdoc
+flake8
+isort
+mypy
+pytest
+pytest-mock
+types-PyYAML
+
+[full]
+vllm
+langchain
+langchain-openai
+fasttext-wheel
+datasets
+mysql-connector-python==8.0.32
+docker==6.1.2
+evalplus@ git+https://github.com/evalplus/evalplus@1895d2f6aa8895044a7cf69defc24bd57695e885
+rouge-score

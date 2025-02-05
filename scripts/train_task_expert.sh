@@ -1,10 +1,10 @@
 # !/bin/bash
 
 # Task Selection
-TASK="mbpp2" # Available options: mbpp2, gsm8k, ai2_arc, cls
+TASK="chatbot" # Available options: mbpp2, gsm8k, ai2_arc, cls
 
 # Training Setting
-NUM_ITERS=200
+NUM_ITERS=5
 
 # This script needs 2 gpus
 CUDA_VISIBLE_DEVICES=0,1 python svd_reinforce_hydra.py \

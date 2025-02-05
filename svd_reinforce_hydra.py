@@ -105,14 +105,31 @@ def main(cfg):
 
     vllm_model = task_loader.get_vllm_model(model_id=model_id)
 
-    train_eval, *test_evals = task_loader.get_evaluator()
-    if task_loader.has_transfer_split:
-        test_eval, transfer_eval = test_evals
+    # Properly handle the evaluator return type
+    data_splits = task_loader.get_evaluator()
+
+    # Ensure it's a tuple for predictable unpacking
+    if isinstance(data_splits, tuple):  
+        train_eval, test_evals = data_splits  
+    elif isinstance(data_splits, list):  
+        train_eval = SimpleEvaluator(data_splits[0]) if len(data_splits) > 0 else None
+        test_eval = SimpleEvaluator(data_splits[1]) if len(data_splits) > 1 else None
     else:
-        test_eval = test_evals[0]
+        train_eval = SimpleEvaluator(data_splits)  # Wrap a single dataset in evaluator
+        test_eval = None
+
+    # Ensure test_evals is properly unpacked
+    if isinstance(test_evals, (list, tuple)) and len(test_evals) > 0:
+        test_eval = test_evals[0]  # If it’s a list/tuple, grab the first element
+    else:
+        test_eval = test_evals  # If it’s already an object, just assign it directly
+
+    # Final sanity check
+    if train_eval is None or not hasattr(train_eval, "evaluate"):
+        raise TypeError(f"train_eval is invalid: {type(train_eval)}, expected an evaluator object")
 
     train_data, train_ix, valid_ix = task_loader.get_train_data()
-    gpu = torch.device("cuda:1")
+    gpu = torch.device("cuda:0")
     np_random = np.random.RandomState(seed)
 
     # cpu + float32 for initial SVD decomposition
@@ -123,7 +140,7 @@ def main(cfg):
     else:
         # Load model and tokenizer.
         model = AutoModelForCausalLM.from_pretrained(
-            model_id, device_map="cuda:1", torch_dtype=torch.bfloat16
+            model_id, device_map="cuda:0", torch_dtype=torch.bfloat16
         )
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     base_params = model.state_dict()

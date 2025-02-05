@@ -1,0 +1,5 @@
+task_loader:
+  _target_: tasks.ChatbotTask  # This registers the Chatbot task
+
+task_name: chatbot  # Make sure this matches what you call it in config.yaml
+

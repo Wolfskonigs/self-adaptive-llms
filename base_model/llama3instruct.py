@@ -5,7 +5,7 @@ from .base import BaseModel
 
 class Llama3Instruct8B(BaseModel):
     def __init__(self):
-        self.model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
+        self.model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
         self.dec_param_file_n = "llama3_decomposed_params.pt"
 
     def get_model_id(self):

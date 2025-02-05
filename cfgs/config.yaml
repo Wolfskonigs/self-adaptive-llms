@@ -1,15 +1,15 @@
 defaults:
   - _self_
   - policy@_global_: default
-  - task@_global_: gsm8k
-  - base_model@_global_: llama3i8b
+  - task@_global_: chatbot
+  - base_model@_global_: mistral03i7b
   - optimization@_global_: reinforce
   - mode@_global_: training
 
-num_iters: 2000
-test_interval: 10
-lr: 2e-3
-batch_size: 256
+num_iters: 5
+test_interval: 1
+lr: 1e-3
+batch_size: 32
 seed: 42
 init_val: 0.1
 test_only: false
@@ -20,18 +20,20 @@ prompt_based_eval: false
 experts_path_dict: null
 
 run_name: null
-
 load_ckpt: null
 exp_suffix: 'st'
-
 exp_name: ${base_model_name}/${optim_name}-${exp_suffix}
 
 wandb_log: true # enabled by default
 wandb_project: shakeoff
 wandb_group_name: ${exp_name}
-extract_svd: false
+
+extract_svd: false  # Enable if useful for reducing parameters
 
 out_dir: results
+
+max_grad_norm: 0.05  # Increased gradient clipping to prevent wild updates
+kl_ref_coeff: 0.05  # Helps control divergence
 
 hydra:
   run:

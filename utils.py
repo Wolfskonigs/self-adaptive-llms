@@ -8,88 +8,97 @@ import torch.utils
 import vllm
 
 
+import torch
+
 def load_hf_params_to_vllm(param: Dict, llm: vllm.LLM) -> None:
-    """Load weights from HF transformer model to vLLM model."""
+    """Load weights from HF transformer model to vLLM model without autograd conflicts."""
 
     model = llm.llm_engine.model_executor.driver_worker.model_runner.model
     num_layers = model.config.num_hidden_layers
 
-    # Load embeddings layer weights.
-    model_param = model.get_parameter("model.embed_tokens.weight")
-    model_param.copy_(
-        param["model.embed_tokens.weight"][: model_param.shape[0]]
-        .to(model_param.dtype)
-        .to(model_param.device)
-    )
-    model_param = model.get_parameter("lm_head.weight")
-    model_param.copy_(
-        param["lm_head.weight"][: model_param.shape[0]]
-        .to(model_param.dtype)
-        .to(model_param.device)
-    )
+    with torch.no_grad():  # Disable gradient tracking
+        # Load embeddings layer weights.
+        model_param = model.get_parameter("model.embed_tokens.weight")
+        model_param.copy_(
+            param["model.embed_tokens.weight"][: model_param.shape[0]]
+            .to(model_param.dtype)
+            .to(model_param.device)
+        )
 
-    # Load the final layernorm weights.
-    model_param = model.get_parameter("model.norm.weight")
-    model_param.copy_(
-        param["model.norm.weight"].to(model_param.dtype).to(model_param.device)
-    )
+        model_param = model.get_parameter("lm_head.weight")
+        model_param.copy_(
+            param["lm_head.weight"][: model_param.shape[0]]
+            .to(model_param.dtype)
+            .to(model_param.device)
+        )
 
-    for i in range(num_layers):
-        # Load qkv_proj weights.
-        model_param = model.get_parameter(f"model.layers.{i}.self_attn.qkv_proj.weight")
+        # Load the final layernorm weights.
+        model_param = model.get_parameter("model.norm.weight")
         model_param.copy_(
-            torch.cat(
-                [
-                    param[f"model.layers.{i}.self_attn.q_proj.weight"],
-                    param[f"model.layers.{i}.self_attn.k_proj.weight"],
-                    param[f"model.layers.{i}.self_attn.v_proj.weight"],
-                ],
-                dim=0,
+            param["model.norm.weight"].to(model_param.dtype).to(model_param.device)
+        )
+
+        for i in range(num_layers):
+            # Load qkv_proj weights.
+            model_param = model.get_parameter(f"model.layers.{i}.self_attn.qkv_proj.weight")
+            model_param.copy_(
+                torch.cat(
+                    [
+                        param[f"model.layers.{i}.self_attn.q_proj.weight"],
+                        param[f"model.layers.{i}.self_attn.k_proj.weight"],
+                        param[f"model.layers.{i}.self_attn.v_proj.weight"],
+                    ],
+                    dim=0,
+                )
+                .to(model_param.dtype)
+                .to(model_param.device)
             )
-            .to(model_param.dtype)
-            .to(model_param.device)
-        )
-        # Load gate_up_proj weights.
-        model_param = model.get_parameter(f"model.layers.{i}.mlp.gate_up_proj.weight")
-        model_param.copy_(
-            torch.cat(
-                [
-                    param[f"model.layers.{i}.mlp.gate_proj.weight"],
-                    param[f"model.layers.{i}.mlp.up_proj.weight"],
-                ],
-                dim=0,
+
+            # Load gate_up_proj weights.
+            model_param = model.get_parameter(f"model.layers.{i}.mlp.gate_up_proj.weight")
+            model_param.copy_(
+                torch.cat(
+                    [
+                        param[f"model.layers.{i}.mlp.gate_proj.weight"],
+                        param[f"model.layers.{i}.mlp.up_proj.weight"],
+                    ],
+                    dim=0,
+                )
+                .to(model_param.dtype)
+                .to(model_param.device)
             )
-            .to(model_param.dtype)
-            .to(model_param.device)
-        )
-        # Load o_proj and down_proj weights.
-        model_param = model.get_parameter(f"model.layers.{i}.self_attn.o_proj.weight")
-        model_param.copy_(
-            param[f"model.layers.{i}.self_attn.o_proj.weight"]
-            .to(model_param.dtype)
-            .to(model_param.device)
-        )
-        model_param = model.get_parameter(f"model.layers.{i}.mlp.down_proj.weight")
-        model_param.copy_(
-            param[f"model.layers.{i}.mlp.down_proj.weight"]
-            .to(model_param.dtype)
-            .to(model_param.device)
-        )
-        # Load layer_norm weights.
-        model_param = model.get_parameter(f"model.layers.{i}.input_layernorm.weight")
-        model_param.copy_(
-            param[f"model.layers.{i}.input_layernorm.weight"]
-            .to(model_param.dtype)
-            .to(model_param.device)
-        )
-        model_param = model.get_parameter(
-            f"model.layers.{i}.post_attention_layernorm.weight"
-        )
-        model_param.copy_(
-            param[f"model.layers.{i}.post_attention_layernorm.weight"]
-            .to(model_param.dtype)
-            .to(model_param.device)
-        )
+
+            # Load o_proj and down_proj weights.
+            model_param = model.get_parameter(f"model.layers.{i}.self_attn.o_proj.weight")
+            model_param.copy_(
+                param[f"model.layers.{i}.self_attn.o_proj.weight"]
+                .to(model_param.dtype)
+                .to(model_param.device)
+            )
+
+            model_param = model.get_parameter(f"model.layers.{i}.mlp.down_proj.weight")
+            model_param.copy_(
+                param[f"model.layers.{i}.mlp.down_proj.weight"]
+                .to(model_param.dtype)
+                .to(model_param.device)
+            )
+
+            # Load layer_norm weights.
+            model_param = model.get_parameter(f"model.layers.{i}.input_layernorm.weight")
+            model_param.copy_(
+                param[f"model.layers.{i}.input_layernorm.weight"]
+                .to(model_param.dtype)
+                .to(model_param.device)
+            )
+
+            model_param = model.get_parameter(
+                f"model.layers.{i}.post_attention_layernorm.weight"
+            )
+            model_param.copy_(
+                param[f"model.layers.{i}.post_attention_layernorm.weight"]
+                .to(model_param.dtype)
+                .to(model_param.device)
+            )
 
 
 def eval_model(vllm_model, evaluator, ix=None):

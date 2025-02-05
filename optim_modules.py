@@ -69,7 +69,7 @@ class Reinforce(OptimizationAlgorithm, nn.Module):
             input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(self.gpu)
             prompt_length = input_ids.shape[-1]
             output_ids = tokenizer(
-                prompt + res.sample_details[j]["output"],
+                prompt + res.get("sample_details", [{}])[j].get("output", ""),
                 return_tensors="pt",
             ).input_ids.to(self.gpu)
             outputs = model(output_ids)
@@ -134,7 +134,7 @@ class Reinforce(OptimizationAlgorithm, nn.Module):
         )
 
         print("Loading weights and getting completions with VLLM")
-        load_hf_params_to_vllm(new_params, vllm_model.llm)
+        load_hf_params_to_vllm(new_params, vllm_model)
         res = eval_model(vllm_model, train_eval, batch_ix)
         rewards = self.get_rewards(task_loader=task_loader, res=res)
 
@@ -158,10 +158,16 @@ class Reinforce(OptimizationAlgorithm, nn.Module):
         for j, prompt in enumerate(prompts):
             input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(gpu)
             prompt_length = input_ids.shape[-1]
-            output_ids = tokenizer(
-                prompt + res.sample_details[j]["output"],
-                return_tensors="pt",
-            ).input_ids.to(gpu)
+
+            # 🔥 Check if 'sample_details' is available and within bounds before using it
+            if j < len(res.get("sample_details", [])):  
+                sample_output = res["sample_details"][j].get("output", "")
+            else:
+                sample_output = ""  # 🔥 Default to empty if out of range
+
+            prompt += sample_output
+
+            output_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(gpu)
             generated_ids = output_ids[:, prompt_length:]
 
             outputs = model(output_ids)
@@ -251,7 +257,10 @@ class RandomShooting(OptimizationAlgorithm, nn.Module):
         ]
         init_soln = torch.concat(init_values_flat, dim=0)
         if self.re_eval_best:
-            initial_values[0] = torch.clone(init_soln)
+            if initial_values.shape[1] == init_soln.shape[0]:  
+                initial_values[0] = torch.clone(init_soln)  # Only assign if dimensions match
+            else:
+                print(f"Shape mismatch: {initial_values.shape} vs {init_soln.shape}")  # Debugging output
 
         self.pop_params = nn.Parameter(
             initial_values,
@@ -360,11 +369,14 @@ class RandomShooting(OptimizationAlgorithm, nn.Module):
                         )
                         for i in correct_batch_ix
                     ]
-                    correct_outputs = [
-                        res.sample_details[j]["output"]
-                        for j, c in enumerate(correct)
-                        if c
-                    ]
+                    correct_outputs = []
+                    for j, c in enumerate(correct):
+                        if c:
+                            if j < len(res.get("sample_details", [])):
+                                correct_outputs.append(res["sample_details"][j].get("output", ""))
+                            else:
+                                correct_outputs.append("")  # 🔥 Default to empty if out of range
+
                     selected_log_probs_list = self.compute_logprobs(
                         model=model,
                         tokenizer=tokenizer,
@@ -524,11 +536,14 @@ class CEM(RandomShooting):
                         )
                         for i in correct_batch_ix
                     ]
-                    correct_outputs = [
-                        res.sample_details[j]["output"]
-                        for j, c in enumerate(correct)
-                        if c
-                    ]
+                    correct_outputs = []
+                    for j, c in enumerate(correct):
+                        if c:
+                            if j < len(res.get("sample_details", [])):
+                                correct_outputs.append(res["sample_details"][j].get("output", ""))
+                            else:
+                                correct_outputs.append("")  # 🔥 Default to empty if out of range
+
                     print("lalala, I am hitting the selected_log_probs!")
                     selected_log_probs_list = self.compute_logprobs(
                         model=model,
